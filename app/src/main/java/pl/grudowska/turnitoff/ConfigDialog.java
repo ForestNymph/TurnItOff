@@ -41,8 +41,6 @@ public class ConfigDialog extends Activity {
             Log.i(LOG, "onCreate() Create new preferences");
             state = "OFF";
         }
-        final TextView status = (TextView) findViewById(R.id.status);
-        status.setText(state);
 
         // Setting icon
         requestWindowFeature(Window.FEATURE_LEFT_ICON);
@@ -59,6 +57,9 @@ public class ConfigDialog extends Activity {
             // Value need to check if this wifi was set last time
             saveData(CURRENT_WIFI_NAME, pl.grudowska.turnitoff.WifiStateHistory.getLastConnectedSsid());
         }
+
+        final TextView status = (TextView) findViewById(R.id.status);
+        status.setText(state);
 
         // Setting saved wifi name
         final TextView savedWifiName = (TextView) findViewById(R.id.saved_wifi_ssid);
@@ -162,7 +163,7 @@ public class ConfigDialog extends Activity {
 
     private String loadData(String preference) {
         SharedPreferences settings = getSharedPreferences(preference, 0);
-        String notification = settings.getString(preference, " ");
+        String notification = settings.getString(preference, "Set data");
 
         Log.i(LOG, "loadData() " + notification);
 
