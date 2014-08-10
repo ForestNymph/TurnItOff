@@ -17,12 +17,19 @@ public class StateBroadcastReceiver extends BroadcastReceiver {
 
         final String action = intent.getAction();
         final String LOG = getClass().getSimpleName();
-        final String SSID_wifi;
+        final String SSID_saved_wifi;
+        final String SSID_last_wifi;
 
         // Get saved network name
-        SharedPreferences settings = context.getSharedPreferences(ConfigDialog.SAVED_WIFI_NAME, 0);
-        SSID_wifi = settings.getString(ConfigDialog.SAVED_WIFI_NAME, "Default");
-        Log.i("WIFI name", SSID_wifi);
+        SharedPreferences settings_save = context.getSharedPreferences(ConfigDialog.SAVED_WIFI_NAME, 0);
+        SSID_saved_wifi = settings_save.getString(ConfigDialog.SAVED_WIFI_NAME, "Default");
+
+        // Get current network name
+        SharedPreferences settings_curr = context.getSharedPreferences(ConfigDialog.CURRENT_WIFI_NAME, 0);
+        SSID_last_wifi = settings_curr.getString(ConfigDialog.CURRENT_WIFI_NAME, "Default");
+
+        Log.i("WIFI saved name", SSID_saved_wifi);
+        Log.i("WIFI last name", SSID_last_wifi);
 
         // Get connectivity intent
         if (action.equals("android.net.conn.CONNECTIVITY_CHANGE")) {
@@ -32,30 +39,25 @@ public class StateBroadcastReceiver extends BroadcastReceiver {
             // check is hardware wifi is on
             if (manager.isWifiEnabled()) {
 
-                Log.i(LOG, "1. hardware WIFI enabled");
+                Log.i(LOG, "Hardware WIFI enabled");
 
                 NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
                 NetworkInfo.State state = networkInfo.getState();
 
                 if (state == NetworkInfo.State.CONNECTED) {
-                    WifiStateHistory.recordConnectedSsid(manager.getConnectionInfo().getSSID().replace("\"", ""));
-                    Log.i(LOG, "2A. WIFI CONNECTED: " + manager.getConnectionInfo().getSSID().replace("\"", ""));
+                    // TODO add changing state to last connected wifi
                 }
 
                 if (state == NetworkInfo.State.DISCONNECTED) {
 
-                    Log.i(LOG, "2B. WIFI DISCONNECTED: " + manager.getConnectionInfo().getSSID().replace("\"", ""));
-
                     // If disconnected with network defined by the user
-                    if (WifiStateHistory.getLastConnectedSsid() != null && WifiStateHistory.getLastConnectedSsid().equals(SSID_wifi)) {
+                    if (SSID_last_wifi.equals(SSID_saved_wifi)) {
 
-                        Log.i(LOG, "3. WIFI HISTORY: " + WifiStateHistory.getLastConnectedSsid());
+                        Log.i(LOG, "WIFI LAST DISCONNECTED: " + SSID_last_wifi);
 
                         Intent intentAlert = new Intent(context, CustomAlertDialog.class);
                         intentAlert.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         context.startActivity(intentAlert);
-
-                        WifiStateHistory.recordConnectedSsid("none");
                     }
                 }
             }

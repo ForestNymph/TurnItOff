@@ -2,8 +2,12 @@ package pl.grudowska.turnitoff;
 
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -19,15 +23,37 @@ public class ConfigDialog extends Activity {
 
     public static final String NOTIFICATION = "NotificationText";
     public static final String SAVED_WIFI_NAME = "SavedWifiName";
+    public static final String CURRENT_WIFI_NAME = "CurrentWifiName";
     private static final String STATE_BROADCAST = "StateOfBroadcastReceiver";
-    private static final String CURRENT_WIFI_NAME = "CurrentWifiName";
     private final String LOG = getClass().getSimpleName();
     private ComponentName receiver;
     private boolean mSaveStateBroadcast;
 
+    private static String getSSID(Context context) {
+        ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+        if (networkInfo.isConnected()) {
+            WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            return wifiManager.getConnectionInfo().getSSID().replace("\"", "");
+        }
+        return null;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+/*        try {
+            File filename = new File(Environment.getExternalStorageDirectory()+"/logfile.log");
+            Log.i(LOG, filename.getAbsolutePath().toString());
+            filename.createNewFile();
+            String cmd = "logcat -d -f "+filename.getAbsolutePath();
+            Runtime.getRuntime().exec(cmd);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+*/
 
         // Setting app state
         SharedPreferences settings = getSharedPreferences(STATE_BROADCAST, 0);
@@ -48,14 +74,14 @@ public class ConfigDialog extends Activity {
         setFeatureDrawableResource(Window.FEATURE_LEFT_ICON, R.drawable.ic_launcher);
 
         // Setting current wifi name
-        pl.grudowska.turnitoff.WifiStateHistory.updateState(getApplicationContext());
         final TextView currentWifiName = (TextView) findViewById(R.id.current_wifi_ssid);
-        if (pl.grudowska.turnitoff.WifiStateHistory.getLastConnectedSsid() == null) {
+        if (getSSID(getApplicationContext()) == null) {
             currentWifiName.setText("not connected");
         } else {
-            currentWifiName.setText(pl.grudowska.turnitoff.WifiStateHistory.getLastConnectedSsid());
+            currentWifiName.setText(getSSID(getApplicationContext()));
             // Value need to check if this wifi was set last time
-            saveData(CURRENT_WIFI_NAME, pl.grudowska.turnitoff.WifiStateHistory.getLastConnectedSsid());
+            Log.i(LOG, getSSID(getApplicationContext()));
+            saveData(CURRENT_WIFI_NAME, getSSID(getApplicationContext()));
         }
 
         final TextView status = (TextView) findViewById(R.id.status);
@@ -125,7 +151,7 @@ public class ConfigDialog extends Activity {
         setWifi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                saveData(SAVED_WIFI_NAME, pl.grudowska.turnitoff.WifiStateHistory.getLastConnectedSsid());
+                saveData(SAVED_WIFI_NAME, getSSID(getApplicationContext()));
 
                 final TextView savedWifiName = (TextView) findViewById(R.id.saved_wifi_ssid);
                 savedWifiName.setText(loadData(SAVED_WIFI_NAME));
