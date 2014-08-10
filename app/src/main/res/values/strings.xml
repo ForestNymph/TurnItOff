@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Turn it off</string>
+    <string name="action">Perform action with app:</string>
+    <string name="state">State:</string>
+    <string name="real_state">OFF</string>
+    <string name="action_settings">Settings</string>
+    <string name="button_on">Enable</string>
+    <string name="button_off">Disable</string>
+    <string name="wifi">WIFI: </string>
+    <string name="title_activity_alert_dialog">Reminder</string>
+    <string name="message">notification text</string>
+    <string name="message_yes">Yes :)</string>
+    <string name="message_no">Oh no :(</string>
+    <string name="close">Close</string>
+    <string name="wifi_ssid">none</string>
+    <string name="set_notification">Set Notification</string>
+    <string name="current_settings">Current Settings:</string>
+    <string name="current_wifi">WIFI: </string>
+    <string name="current_wifi_name">default</string>
+    <string name="set_wifi">Use WIFI</string>
+    <string name="info">WHAT IS THIS APP FOR? \nSimple application sending notification when you disconnected from the specified wifi. \n<b><i>WIFI must be enabled.</i></b></string>
+
+</resources>
