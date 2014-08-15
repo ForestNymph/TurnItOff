@@ -2,12 +2,8 @@ package pl.grudowska.turnitoff;
 
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -29,31 +25,9 @@ public class ConfigDialog extends Activity {
     private ComponentName receiver;
     private boolean mSaveStateBroadcast;
 
-    private static String getSSID(Context context) {
-        ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
-        if (networkInfo.isConnected()) {
-            WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-            return wifiManager.getConnectionInfo().getSSID().replace("\"", "");
-        }
-        return null;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-/*        try {
-            File filename = new File(Environment.getExternalStorageDirectory()+"/logfile.log");
-            Log.i(LOG, filename.getAbsolutePath().toString());
-            filename.createNewFile();
-            String cmd = "logcat -d -f "+filename.getAbsolutePath();
-            Runtime.getRuntime().exec(cmd);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-*/
 
         // Setting app state
         SharedPreferences settings = getSharedPreferences(STATE_BROADCAST, 0);
@@ -75,13 +49,11 @@ public class ConfigDialog extends Activity {
 
         // Setting current wifi name
         final TextView currentWifiName = (TextView) findViewById(R.id.current_wifi_ssid);
-        if (getSSID(getApplicationContext()) == null) {
+        if (WifiInformation.getSSID(getApplicationContext()) == null) {
             currentWifiName.setText("not connected");
         } else {
-            currentWifiName.setText(getSSID(getApplicationContext()));
-            // Value need to check if this wifi was set last time
-            Log.i(LOG, getSSID(getApplicationContext()));
-            saveData(CURRENT_WIFI_NAME, getSSID(getApplicationContext()));
+            currentWifiName.setText(WifiInformation.getSSID(getApplicationContext()));
+            saveData(CURRENT_WIFI_NAME, WifiInformation.getSSID(getApplicationContext()));
         }
 
         final TextView status = (TextView) findViewById(R.id.status);
@@ -151,7 +123,7 @@ public class ConfigDialog extends Activity {
         setWifi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                saveData(SAVED_WIFI_NAME, getSSID(getApplicationContext()));
+                saveData(SAVED_WIFI_NAME, WifiInformation.getSSID(getApplicationContext()));
 
                 final TextView savedWifiName = (TextView) findViewById(R.id.saved_wifi_ssid);
                 savedWifiName.setText(loadData(SAVED_WIFI_NAME));
@@ -181,7 +153,7 @@ public class ConfigDialog extends Activity {
         SharedPreferences settings = getSharedPreferences(preference, 0);
         SharedPreferences.Editor editor = settings.edit();
 
-        Log.i(LOG, "saveData() " + data);
+        Log.i(LOG, "saveData() " + "PREFERENCE: " + preference + ": " + data);
 
         editor.putString(preference, data);
         editor.apply();
@@ -191,22 +163,9 @@ public class ConfigDialog extends Activity {
         SharedPreferences settings = getSharedPreferences(preference, 0);
         String notification = settings.getString(preference, "Set data");
 
-        Log.i(LOG, "loadData() " + notification);
+        Log.i(LOG, "loadData() " + "PREFERENCE: " + preference + ": " + notification);
 
         return notification;
-    }
-
-    protected void onStop() {
-        // We need an Editor object to make preference changes.
-        // All objects are from android.context.Context
-        SharedPreferences settings = getSharedPreferences(STATE_BROADCAST, 0);
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putBoolean(STATE_BROADCAST, mSaveStateBroadcast);
-        // Apply the edits!
-        editor.apply();
-
-        super.onStop();
-        Log.i(LOG, "onStop()");
     }
 
     private void enableBroadcastReceiver() {
@@ -227,6 +186,20 @@ public class ConfigDialog extends Activity {
                 PackageManager.DONT_KILL_APP);
 
         mSaveStateBroadcast = false;
+    }
+
+    @Override
+    protected void onStop() {
+        // We need an Editor object to make preference changes.
+        // All objects are from android.context.Context
+        SharedPreferences settings = getSharedPreferences(STATE_BROADCAST, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean(STATE_BROADCAST, mSaveStateBroadcast);
+        // Apply the edits!
+        editor.apply();
+
+        super.onStop();
+        Log.i(LOG, "onStop()");
     }
 
     @Override
