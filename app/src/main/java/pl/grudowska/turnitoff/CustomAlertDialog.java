@@ -3,6 +3,9 @@ package pl.grudowska.turnitoff;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.util.Log;
@@ -18,6 +21,7 @@ public class CustomAlertDialog extends Activity {
 
     private final String LOG = getClass().getSimpleName();
     private Vibrator vibrator;
+    private Ringtone alarm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +53,10 @@ public class CustomAlertDialog extends Activity {
         // The "-1" means to repeat only once
         vibrator.vibrate(pattern, -1);
 
+        Uri system_sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        alarm = RingtoneManager.getRingtone(getApplicationContext(), system_sound);
+        alarm.play();
+
         Button turnoffYES = (Button) findViewById(R.id.turnoff_yes);
         turnoffYES.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -56,6 +64,7 @@ public class CustomAlertDialog extends Activity {
                 Toast.makeText(getBaseContext(),
                         "Good :)", Toast.LENGTH_SHORT)
                         .show();
+                alarm.stop();
                 finish();
             }
         });
@@ -67,6 +76,7 @@ public class CustomAlertDialog extends Activity {
                 Toast.makeText(getBaseContext(),
                         "Go back", Toast.LENGTH_SHORT)
                         .show();
+                alarm.stop();
                 finish();
             }
         });
