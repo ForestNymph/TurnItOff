@@ -19,6 +19,9 @@ public class StateBroadcastReceiver extends BroadcastReceiver {
 
         final String action = intent.getAction();
         final String LOG = getClass().getSimpleName();
+        final String WIFI_CONNECTION = "OtherConnectionStates";
+
+        Log.i(LOG, "Intent action: " + action);
 
         // Get connectivity intent
         if (action.equals("android.net.conn.CONNECTIVITY_CHANGE")) {
@@ -50,31 +53,51 @@ public class StateBroadcastReceiver extends BroadcastReceiver {
                         SharedPreferences.Editor editor = settings.edit();
                         editor.putString(ConfigDialog.CURRENT_WIFI_NAME, SSID_current_wifi);
                         editor.apply();
+
+                        // Save information about connection. [is wifi connected]
+                        settings = context.getSharedPreferences(WIFI_CONNECTION, 0);
+                        SharedPreferences.Editor editor_wifi = settings.edit();
+                        editor_wifi.putBoolean(WIFI_CONNECTION, true);
+                        editor_wifi.apply();
                     }
                 } else {
-                    // Collecting information about current wifi state
-                    NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-                    NetworkInfo.State state = networkInfo.getState();
+                    // Get infos about device was disconnected with wifi
+                    SharedPreferences wifi_connection = context.getSharedPreferences(WIFI_CONNECTION, 0);
+                    boolean wifi_conn = wifi_connection.getBoolean(WIFI_CONNECTION, true);
 
-                    if (state == NetworkInfo.State.DISCONNECTED) {
-                        // Get current wifi name
-                        SharedPreferences wifi_curr = context.getSharedPreferences(ConfigDialog.CURRENT_WIFI_NAME, 0);
-                        String SSID_current_wifi = wifi_curr.getString(ConfigDialog.CURRENT_WIFI_NAME, "none");
-                        Log.i(LOG, "WIFI current name: " + SSID_current_wifi);
+                    // If connection status changed for wifi not for other types of connections [mobile/bluetooth etc.]
+                    if (wifi_conn) {
+                        // Collecting information about current wifi state
+                        NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+                        NetworkInfo.State state = networkInfo.getState();
 
-                        // Get saved wifi name
-                        SharedPreferences wifi_saved = context.getSharedPreferences(ConfigDialog.SAVED_WIFI_NAME, 0);
-                        String SSID_saved_wifi = wifi_saved.getString(ConfigDialog.SAVED_WIFI_NAME, "none");
-                        Log.i(LOG, "WIFI saved name: " + SSID_saved_wifi);
+                        if (state == NetworkInfo.State.DISCONNECTED) {
+                            // Get current wifi name
+                            SharedPreferences wifi_curr = context.getSharedPreferences(ConfigDialog.CURRENT_WIFI_NAME, 0);
+                            String SSID_current_wifi = wifi_curr.getString(ConfigDialog.CURRENT_WIFI_NAME, "none");
+                            Log.i(LOG, "WIFI current name: " + SSID_current_wifi);
 
-                        // If disconnected with wifi network defined by the user
-                        if (SSID_current_wifi.equals(SSID_saved_wifi)) {
+                            // Get saved wifi name
+                            SharedPreferences wifi_saved = context.getSharedPreferences(ConfigDialog.SAVED_WIFI_NAME, 0);
+                            String SSID_saved_wifi = wifi_saved.getString(ConfigDialog.SAVED_WIFI_NAME, "none");
+                            Log.i(LOG, "WIFI saved name: " + SSID_saved_wifi);
 
-                            Log.i(LOG, "WIFI DISCONNECTED name: " + SSID_current_wifi);
+                            // If disconnected with wifi network defined by the user
+                            if (SSID_current_wifi.equals(SSID_saved_wifi)) {
 
-                            Intent intentAlert = new Intent(context, CustomAlertDialog.class);
-                            intentAlert.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            context.startActivity(intentAlert);
+                                // Flag for checking other states connection when wifi disconnected
+                                // We only intrested in changing a wifi state
+                                SharedPreferences settings = context.getSharedPreferences(WIFI_CONNECTION, 0);
+                                SharedPreferences.Editor editor = settings.edit();
+                                editor.putBoolean(WIFI_CONNECTION, false);
+                                editor.apply();
+
+                                Log.i(LOG, "WIFI DISCONNECTED name: " + SSID_current_wifi);
+
+                                Intent intentAlert = new Intent(context, CustomAlertDialog.class);
+                                intentAlert.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                context.startActivity(intentAlert);
+                            }
                         }
                     }
                 }
