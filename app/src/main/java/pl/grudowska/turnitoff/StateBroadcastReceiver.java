@@ -49,48 +49,39 @@ public class StateBroadcastReceiver extends BroadcastReceiver {
 
                         Log.i(LOG, "WIFI CONNECTED name: " + SSID_current_wifi);
 
-                        SharedPreferences settings = context.getSharedPreferences(ConfigDialog.CURRENT_WIFI_NAME, 0);
-                        SharedPreferences.Editor editor = settings.edit();
-                        editor.putString(ConfigDialog.CURRENT_WIFI_NAME, SSID_current_wifi);
-                        editor.apply();
-
+                        // Save current wifi name
+                        SharedPreferencesManager.saveDataString(context, ConfigDialog.CURRENT_WIFI_NAME,
+                                SSID_current_wifi);
                         // Save information about connection. [is wifi connected]
-                        settings = context.getSharedPreferences(WIFI_CONNECTION, 0);
-                        SharedPreferences.Editor editor_wifi = settings.edit();
-                        editor_wifi.putBoolean(WIFI_CONNECTION, true);
-                        editor_wifi.apply();
+                        SharedPreferencesManager.saveDataBoolean(context, WIFI_CONNECTION, true);
                     }
                 } else {
-                    // Get infos about device was disconnected with wifi
-                    SharedPreferences wifi_connection = context.getSharedPreferences(WIFI_CONNECTION, 0);
-                    boolean wifi_conn = wifi_connection.getBoolean(WIFI_CONNECTION, true);
-
                     // If connection status changed for wifi not for other types of connections [mobile/bluetooth etc.]
-                    if (wifi_conn) {
+                    if (SharedPreferencesManager.loadDataBoolean(context, WIFI_CONNECTION, true)) {
                         // Collecting information about current wifi state
                         NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
                         NetworkInfo.State state = networkInfo.getState();
 
                         if (state == NetworkInfo.State.DISCONNECTED) {
                             // Get current wifi name
-                            SharedPreferences wifi_curr = context.getSharedPreferences(ConfigDialog.CURRENT_WIFI_NAME, 0);
-                            String SSID_current_wifi = wifi_curr.getString(ConfigDialog.CURRENT_WIFI_NAME, "none");
+                            String SSID_current_wifi = SharedPreferencesManager.loadDataString(context,
+                                    ConfigDialog.CURRENT_WIFI_NAME, "none");
+
                             Log.i(LOG, "WIFI current name: " + SSID_current_wifi);
 
                             // Get saved wifi name
                             SharedPreferences wifi_saved = context.getSharedPreferences(ConfigDialog.SAVED_WIFI_NAME, 0);
-                            String SSID_saved_wifi = wifi_saved.getString(ConfigDialog.SAVED_WIFI_NAME, "none");
+                            String SSID_saved_wifi = SharedPreferencesManager.loadDataString(context,
+                                    ConfigDialog.SAVED_WIFI_NAME, "none");
+
                             Log.i(LOG, "WIFI saved name: " + SSID_saved_wifi);
 
                             // If disconnected with wifi network defined by the user
                             if (SSID_current_wifi.equals(SSID_saved_wifi)) {
 
-                                // Flag for checking other states connection when wifi disconnected
+                                // Flag for not checking other states connection when wifi disconnected
                                 // We only intrested in changing a wifi state
-                                SharedPreferences settings = context.getSharedPreferences(WIFI_CONNECTION, 0);
-                                SharedPreferences.Editor editor = settings.edit();
-                                editor.putBoolean(WIFI_CONNECTION, false);
-                                editor.apply();
+                                SharedPreferencesManager.saveDataBoolean(context, WIFI_CONNECTION, false);
 
                                 Log.i(LOG, "WIFI DISCONNECTED name: " + SSID_current_wifi);
 

@@ -29,10 +29,10 @@ public class ConfigDialog extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Setting app state
-        SharedPreferences settings = getSharedPreferences(STATE_BROADCAST, 0);
-        // If no any preferences or preferences set as false return false
-        mSaveStateBroadcast = settings.getBoolean(STATE_BROADCAST, false);
+        // Setting app state, if no any preferences or preferences set as false return false
+        mSaveStateBroadcast = SharedPreferencesManager.loadDataBoolean(getApplicationContext(),
+                STATE_BROADCAST, false);
+
         String state;
         if (mSaveStateBroadcast) {
             Log.i(LOG, "onCreate() Get existing preferences");
@@ -53,7 +53,8 @@ public class ConfigDialog extends Activity {
             currentWifiName.setText("not connected");
         } else {
             currentWifiName.setText(WifiInformation.getSSID(getApplicationContext()));
-            saveData(CURRENT_WIFI_NAME, WifiInformation.getSSID(getApplicationContext()));
+            SharedPreferencesManager.saveDataString(getApplicationContext(), CURRENT_WIFI_NAME,
+                    WifiInformation.getSSID(getApplicationContext()));
         }
 
         final TextView status = (TextView) findViewById(R.id.status);
@@ -61,14 +62,16 @@ public class ConfigDialog extends Activity {
 
         // Setting saved wifi name
         final TextView savedWifiName = (TextView) findViewById(R.id.saved_wifi_ssid);
-        savedWifiName.setText(loadData(SAVED_WIFI_NAME));
+        savedWifiName.setText(SharedPreferencesManager.loadDataString(getApplicationContext(),
+                SAVED_WIFI_NAME, "none"));
 
         // Setting notification text
         ViewSwitcher switcher = (ViewSwitcher) findViewById(R.id.switcher);
         TextView notificationText = (TextView) switcher.findViewById(R.id.notification_text_view);
         EditText notificationEdit = (EditText) switcher.findViewById(R.id.hidden_edit_view);
 
-        String notification = loadData(NOTIFICATION);
+        String notification = SharedPreferencesManager.loadDataString(getApplicationContext(),
+                NOTIFICATION, "set notification text");
         notificationText.setText(notification);
         notificationEdit.setText(notification);
 
@@ -123,10 +126,11 @@ public class ConfigDialog extends Activity {
         setWifi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                saveData(SAVED_WIFI_NAME, WifiInformation.getSSID(getApplicationContext()));
-
+                SharedPreferencesManager.saveDataString(getApplicationContext(), SAVED_WIFI_NAME,
+                        WifiInformation.getSSID(getApplicationContext()));
                 final TextView savedWifiName = (TextView) findViewById(R.id.saved_wifi_ssid);
-                savedWifiName.setText(loadData(SAVED_WIFI_NAME));
+                savedWifiName.setText(SharedPreferencesManager.loadDataString(getApplicationContext(),
+                        SAVED_WIFI_NAME, "none"));
             }
         });
     }
@@ -142,30 +146,13 @@ public class ConfigDialog extends Activity {
         String newNotification = notificationEdit.getText().toString();
 
         if (newNotification.isEmpty()) {
-            notificationText.setText(loadData(NOTIFICATION));
+            notificationText.setText(SharedPreferencesManager.loadDataString(getApplicationContext(),
+                    NOTIFICATION, "set notification text"));
         } else {
             notificationText.setText(newNotification);
         }
-        saveData(NOTIFICATION, notificationEdit.getText().toString());
-    }
-
-    private void saveData(String preference, String data) {
-        SharedPreferences settings = getSharedPreferences(preference, 0);
-        SharedPreferences.Editor editor = settings.edit();
-
-        Log.i(LOG, "saveData() " + "PREFERENCE: " + preference + ": " + data);
-
-        editor.putString(preference, data);
-        editor.apply();
-    }
-
-    private String loadData(String preference) {
-        SharedPreferences settings = getSharedPreferences(preference, 0);
-        String notification = settings.getString(preference, "Set data");
-
-        Log.i(LOG, "loadData() " + "PREFERENCE: " + preference + ": " + notification);
-
-        return notification;
+        SharedPreferencesManager.saveDataString(getApplicationContext(), NOTIFICATION,
+                notificationEdit.getText().toString());
     }
 
     private void enableBroadcastReceiver() {
